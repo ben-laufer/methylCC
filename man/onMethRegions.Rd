@@ -4,7 +4,9 @@
 \name{onMethRegions}
 \alias{onMethRegions}
 \title{Methylated regions for all celltypes}
-\format{add more here.}
+\format{
+add more here.
+}
 \description{
 This is the script used to create the
 \code{onMethRegions} data set.

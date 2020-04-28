@@ -27,8 +27,8 @@ Accessors for the 'cell_counts' slot of a estimatecc object.
 # This is a reduced version of the FlowSorted.Blood.450k 
 # dataset available by using BiocManager::install("FlowSorted.Blood.450k),
 # but for purposes of the example, we use the smaller version 
-# and we set \\code{demo=TRUE}. For any case outside of this example for 
-# the package, you should set \\code{demo=FALSE} (the default). 
+# and we set \code{demo=TRUE}. For any case outside of this example for 
+# the package, you should set \code{demo=FALSE} (the default). 
 
 dir <- system.file("data", package="methylCC")
 files <- file.path(dir, "FlowSorted.Blood.450k.sub.RData") 

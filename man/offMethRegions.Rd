@@ -4,7 +4,9 @@
 \name{offMethRegions}
 \alias{offMethRegions}
 \title{Unmethylated regions for all celltypes}
-\format{add more here.}
+\format{
+add more here.
+}
 \description{
 This is the script used to create the
 \code{offMethRegions} data set.

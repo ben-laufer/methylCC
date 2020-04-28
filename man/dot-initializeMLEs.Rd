@@ -4,8 +4,18 @@
 \alias{.initializeMLEs}
 \title{.initializeMLEs}
 \usage{
-.initializeMLEs(init_param_method, n, K, Ys, Zs, a0init, a1init, sig0init,
-  sig1init, tauinit)
+.initializeMLEs(
+  init_param_method,
+  n,
+  K,
+  Ys,
+  Zs,
+  a0init,
+  a1init,
+  sig0init,
+  sig1init,
+  tauinit
+)
 }
 \arguments{
 \item{init_param_method}{method to initialize parameter estimates.

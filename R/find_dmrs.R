@@ -1,8 +1,8 @@
 #' @title Finding differentially methylated regions
 #' 
-#' @description This function uses the \code{FlowSorted.Blood.450k}
-#' whole blood reference methylomes with six cell types 
-#' to identify differentially methylated regions.  
+#' @description This function use flow sorted array 
+#' reference methylomes for either blood, cordblood, 
+#' or brain to identify differentially methylated regions.  
 #'
 #' @param verbose TRUE/FALSE argument specifying if verbose
 #' messages should be returned or not. Default is TRUE.
@@ -45,16 +45,28 @@
 #' @param pairwise_comparison TRUE/FAlSE of whether all pairwise
 #' comparisons (e.g. methylated in Granulocytes and Monocytes, 
 #' but not methylated in other cell types). Default if FALSE. 
-#' @param mset_train_flow_sort Default is NULL. However, a user
-#' can provide a \code{MethylSet} object after processing the 
-#' \code{FlowSorted.Blood.450k} dataset. The default normalization
-#' is \code{preprocessIllumina()}. 
+#' @param mset_train_flow_sort Default is NULL and will select 
+#' select \code{"FlowSorted.Blood.450k"}. Alternatively, the user
+#' can specify another existing dataset \code{c("FlowSorted.Blood.EPIC",
+#' "FlowSorted.CordBloodCombined.450k", "FlowSorted.CordTissueAndBlood.EPIC",
+#' "FlowSorted.DLPFC.450k")}. Additionally, a user can provide a 
+#' \code{MethylSet} object after processing the 
+#' \code{FlowSorted.Blood.450k} dataset. The default
+#' normalization is \code{preprocessIllumina()}.
 #' 
 #' @return A list of data frames and GRanges objects.
 #' 
+#' @import methylCC
 #' @import minfi 
 #' @import GenomicRanges
+#' @import ExperimentHub
 #' @import FlowSorted.Blood.450k
+#' @import FlowSorted.DLPFC.450k
+#' @import FlowSorted.CordBloodCombined.450k
+#' @import FlowSorted.Blood.EPIC
+#' @import IlluminaHumanMethylation450kmanifest
+#' @import IlluminaHumanMethylationEPICmanifest
+#' @import IlluminaHumanMethylationEPICanno.ilm10b2.hg19
 #' @importFrom Biobase pData
 #' @importFrom bumphunter clusterMaker loessByCluster bumphunter 
 #' @importFrom genefilter rowttests
@@ -62,33 +74,87 @@
 #' @importFrom S4Vectors queryHits
 #' @importFrom stats model.matrix
 #' @importFrom utils head
-#' 
-.find_dmrs <- function(verbose=TRUE, gr_target=NULL,
-                      include_cpgs = FALSE, include_dmrs = TRUE,
-                      num_cpgs=50, num_regions=50, 
-                      bumphunter_beta_cutoff = 0.2, 
-                      dmr_up_cutoff = 0.5, dmr_down_cutoff = 0.4,
-                      dmr_pval_cutoff = 1e-11, cpg_pval_cutoff = 1e-08,
-                      cpg_up_dm_cutoff = 0, cpg_down_dm_cutoff = 0, 
-                      pairwise_comparison = FALSE, 
-                      mset_train_flow_sort=NULL) {
-
-  if(is.null(mset_train_flow_sort)){
-    FlowSorted.Blood.450k <- updateObject(FlowSorted.Blood.450k)
-    mset_train_flow_sort <- preprocessIllumina(FlowSorted.Blood.450k)
-    mset_train_flow_sort <- mapToGenome(mset_train_flow_sort, 
-                                        mergeManifest = FALSE)
-    rm(FlowSorted.Blood.450k)
+#' @importFrom glue glue
+#' @importFrom magrittr %>%
+.find_dmrs <- function(verbose = TRUE, gr_target = NULL,
+                       include_cpgs = FALSE, include_dmrs = TRUE,
+                       num_cpgs = 50, num_regions = 50, 
+                       bumphunter_beta_cutoff = 0.2, 
+                       dmr_up_cutoff = 0.5, dmr_down_cutoff = 0.4,
+                       dmr_pval_cutoff = 1e-11, cpg_pval_cutoff = 1e-08,
+                       cpg_up_dm_cutoff = 0, cpg_down_dm_cutoff = 0, 
+                       pairwise_comparison = FALSE,
+                       mset_train_flow_sort = NULL) {
+  
+  if(mset_train_flow_sort == "FlowSorted.Blood.450k"){
+    dataset <- mset_train_flow_sort
+    mset_train_flow_sort <- FlowSorted.Blood.450k
+    mset_train_flow_sort <- mset_train_flow_sort %>%
+      updateObject() %>%
+      preprocessIllumina() %>% 
+      mapToGenome(mergeManifest = FALSE)
+    
+    IDs <- c("Gran", "CD4T", "CD8T", "Bcell", "Mono", "NK")
+    
+    # remove outliers
+    mset_train_flow_sort <- mset_train_flow_sort[, 
+                                                 pData(mset_train_flow_sort)$Sample_Name != "CD8+_105"]
+    
+  }else if(mset_train_flow_sort == "FlowSorted.Blood.EPIC"){
+    dataset <- mset_train_flow_sort
+    mset_train_flow_sort <- ExperimentHub::ExperimentHub()[["EH1136"]] %>%
+      updateObject() %>%
+      preprocessIllumina() %>%
+      mapToGenome(mergeManifest = FALSE)
+    
+    IDs <- c("Neu", "NK", "Bcell" , "CD4T", "CD8T", "Mono")
+    
+  }else if(mset_train_flow_sort == "FlowSorted.CordTissueAndBlood.EPIC"){
+    if(!require(FlowSorted.CordTissueAndBlood.EPIC)){
+      install.packages(paste0("https://karnanilab.com/Tools/",
+                              "FlowSorted.CordTissueAndBlood.EPIC/",
+                              "FlowSorted.CordTissueAndBlood.EPIC_1.0.1.tar.gz"),
+                       repos = NULL, type = "source")}
+    library(FlowSorted.CordTissueAndBlood.EPIC)
+    
+    dataset <- mset_train_flow_sort
+    mset_train_flow_sort <- FlowSorted.CordTissueAndBlood.EPIC %>% 
+      updateObject() %>%
+      preprocessIllumina() %>%
+      mapToGenome(mergeManifest = FALSE)
+    
+    IDs <- c("CD8T", "CD4T", "NK", "Bcell", "Mono", "Gran")
+    
+  }else if(mset_train_flow_sort == "FlowSorted.CordBloodCombined.450k"){
+    dataset <- mset_train_flow_sort
+    mset_train_flow_sort <- ExperimentHub::ExperimentHub()[["EH2256"]] %>%
+      updateObject() %>%
+      preprocessIllumina() %>%
+      mapToGenome(mergeManifest = FALSE)
+    
+    IDs <- c("CD8T", "CD4T", "NK", "Bcell", "Mono", "Gran", "nRBC")
+    
+  }else if(mset_train_flow_sort == "FlowSorted.DLPFC.450k"){
+    dataset <- mset_train_flow_sort
+    mset_train_flow_sort <- FlowSorted.DLPFC.450k
+    mset_train_flow_sort <- mset_train_flow_sort %>%
+      updateObject() %>%
+      preprocessIllumina() %>%
+      mapToGenome(mergeManifest = FALSE)
+    
+    IDs <- c("NeuN_pos", "NeuN_neg")
+    
+  }else{
+    # remove outliers
+    dataset <- "FlowSorted.Blood.450k"
+    mset_train_flow_sort <- mset_train_flow_sort[, 
+                                                 pData(mset_train_flow_sort)$Sample_Name != "CD8+_105"]
+    IDs <- c("Gran", "CD4T", "CD8T", "Bcell", "Mono", "NK")
   }
   
   # create training object to identify DMRs
-  IDs = c("Gran", "CD4T", "CD8T", "Bcell","Mono", "NK")
   mset_train_flow_sort <- mset_train_flow_sort[, 
-              (pData(mset_train_flow_sort)$CellType %in% IDs) ]
-  
-  # remove outliers
-  mset_train_flow_sort <- mset_train_flow_sort[, 
-               pData(mset_train_flow_sort)$Sample_Name != "CD8+_105"] 
+                                               (pData(mset_train_flow_sort)$CellType %in% IDs) ]
   
   # find celltype specific regions using only overlap CpGs in target object
   if(!is.null(gr_target)){ 
@@ -105,8 +171,20 @@
   pd <- as.data.frame(pData(mset_train_flow_sort))
   gr <- granges(mset_train_flow_sort)
   p_beta <- getBeta(mset_train_flow_sort, type = "Illumina") # beta values
-  colnames(p_beta) = pd$Sample_Name = rownames(pd) = 
-                     gsub("\\+","", pd$Sample_Name)
+  
+  if(dataset == "FlowSorted.Blood.450k"){
+    colnames(p_beta) = pd$Sample_Name = rownames(pd) = 
+      gsub("\\+","", pd$Sample_Name)
+  }else if(dataset == "FlowSorted.Blood.EPIC" |
+           dataset == "FlowSorted.CordBlood.EPIC" |
+           dataset == "FlowSorted.CordBloodCombined.450k"){
+    colnames(p_beta) = pd$Sample_Name = rownames(pd) =
+      paste(pd$CellType, pd$Sample_Name, pd$Slide, sep="_")
+  }else if(dataset == "FlowSorted.DLPFC.450k"){
+    colnames(p_beta) = pd$Sample_Name = rownames(pd) =
+      paste(pd$CellType, pd$SampleID, sep="_")
+  }
+  
   cell <- factor(pd$CellType, levels = IDs)
   cell_levels <- levels(cell)
   
@@ -191,21 +269,21 @@
         (bumps$table$p.value < dmr_pval_cutoff)  # ideally less than 1e-11
       
       bump_mat_up <- bumps$table[keep_ind_regions & bumps$table$dm < 0 &
-                            # ideally less than 0.6
-                            bumps$table$dmr_up_max_diff<dmr_up_cutoff,] 
+                                   # ideally less than 0.6
+                                   bumps$table$dmr_up_max_diff<dmr_up_cutoff,] 
       bump_mat_up <- bump_mat_up[order(-bump_mat_up$L, bump_mat_up$dm), ]
       if(nrow(bump_mat_up) > 0){
         gr_regions_up <- makeGRangesFromDataFrame(bump_mat_up, 
                                                   keep.extra.columns=TRUE)
         mcols(gr_regions_up)$dmr_status <- rep("DMR", length(gr_regions_up))
         gr_regions_up <- gr_regions_up[, names(mcols(gr_regions_up)) %in% 
-                              c("indexStart", "indexEnd", "L", "dm", "p.value", 
-                                "dmr_status", "dmr_up_max_diff")]
+                                         c("indexStart", "indexEnd", "L", "dm", "p.value", 
+                                           "dmr_status", "dmr_up_max_diff")]
         names(mcols(gr_regions_up))[
           names(mcols(gr_regions_up)) == "dmr_up_max_diff"] <- "dmr_max_diff"
-
+        
         gr_regions_up <- gr_regions_up %>% arrange(-L, dm) %>% 
-                              head(num_regions)
+          head(num_regions)
       } else {
         gr_regions_up <- GRanges()
       }
@@ -219,15 +297,15 @@
         gr_regions_down <- makeGRangesFromDataFrame(bump_mat_down, 
                                                     keep.extra.columns=TRUE)
         mcols(gr_regions_down)$dmr_status <- 
-                        rep("DMR", length(gr_regions_down))
+          rep("DMR", length(gr_regions_down))
         gr_regions_down <- gr_regions_down[, names(mcols(gr_regions_down)) %in%
-                            c("indexStart", "indexEnd", "L", "dm", "p.value", 
-                              "dmr_status", "dmr_down_max_diff")]
+                                             c("indexStart", "indexEnd", "L", "dm", "p.value", 
+                                               "dmr_status", "dmr_down_max_diff")]
         names(mcols(gr_regions_down))[names(mcols(gr_regions_down)) 
                                       == "dmr_down_max_diff"] <- "dmr_max_diff"
         gr_regions_down <- gr_regions_down %>% 
-                              arrange(-L, -dm) %>% 
-                              head(num_regions)
+          arrange(-L, -dm) %>% 
+          head(num_regions)
       } else {
         gr_regions_down <- GRanges()
       }
@@ -240,7 +318,7 @@
       tstats_up <- tstats[order(tstats[, "dm"], decreasing = FALSE), ]
       # at a min should be less than 0
       tstats_up <- tstats_up[tstats_up$dm < cpg_up_dm_cutoff,] 
-        
+      
       probe_keep <- rownames(tstats_up)[seq_len(min(nrow(tstats_up), 
                                                     num_cpgs))]
       if(length(probe_keep) > 0){
@@ -257,7 +335,7 @@
                                               "L", "p.value", "dm", 
                                               "dmr_status")]))
         gr_regions_up <- gr_regions_up %>% arrange(-L, dm) %>% 
-                            head(num_regions)
+          head(num_regions)
       } 
       
       tstats_down <- tstats[order(tstats[, "dm"], decreasing = TRUE), ]
@@ -279,8 +357,8 @@
                                                 "L", "p.value", "dm", 
                                                 "dmr_status")]))
         gr_regions_down <- gr_regions_down %>% 
-                            arrange(-L, -dm) %>% 
-                            head(num_regions)
+          arrange(-L, -dm) %>% 
+          head(num_regions)
       } 
     }
     
@@ -325,14 +403,14 @@
   colnames(zmat) <- cell_levels
   
   y_regions <- t(apply(
-          as.data.frame(mcols(regions_all))[,seq_len(2)],1,function(ind){
-    colMeans(p_beta[(ind[1]):(ind[2]),,drop=FALSE])
-  }))
+    as.data.frame(mcols(regions_all))[,seq_len(2)],1,function(ind){
+      colMeans(p_beta[(ind[1]):(ind[2]),,drop=FALSE])
+    }))
   
   profiles <- vapply(.splitit(cell), 
                      FUN = function(ind){ rowMeans(y_regions[,ind])}, 
                      FUN.VALUE = numeric(nrow(y_regions)))
-
+  
   removeMe <- duplicated(regions_all)
   list(regions_all = regions_all[!removeMe,], 
        zmat = zmat[!removeMe,], 

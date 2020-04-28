@@ -4,9 +4,12 @@
 \alias{.preprocess_estimatecc}
 \title{.preprocess_estimatecc}
 \usage{
-.preprocess_estimatecc(object, verbose = TRUE,
+.preprocess_estimatecc(
+  object,
+  verbose = TRUE,
   init_param_method = "random",
-  celltype_specific_dmrs = celltype_specific_dmrs)
+  celltype_specific_dmrs = celltype_specific_dmrs
+)
 }
 \arguments{
 \item{object}{an object can be a \code{RGChannelSet}, 

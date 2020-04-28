@@ -4,8 +4,15 @@
 \alias{.initialize_theta}
 \title{.initialize_theta}
 \usage{
-.initialize_theta(n, K, alpha0 = NULL, alpha1 = NULL, sig0 = NULL,
-  sig1 = NULL, tau = NULL)
+.initialize_theta(
+  n,
+  K,
+  alpha0 = NULL,
+  alpha1 = NULL,
+  sig0 = NULL,
+  sig1 = NULL,
+  tau = NULL
+)
 }
 \arguments{
 \item{n}{Number of samples}

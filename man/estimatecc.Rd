@@ -5,11 +5,24 @@
 \alias{estimatecc}
 \title{Estimate cell composition from DNAm data}
 \usage{
-estimatecc(object, find_dmrs_object = NULL, verbose = TRUE,
-  epsilon = 0.01, max_iter = 100, take_intersection = FALSE,
-  include_cpgs = FALSE, include_dmrs = TRUE,
-  init_param_method = "random", a0init = NULL, a1init = NULL,
-  sig0init = NULL, sig1init = NULL, tauinit = NULL, demo = FALSE)
+estimatecc(
+  object,
+  find_dmrs_object = NULL,
+  dataset = "FlowSorted.Blood.450k",
+  verbose = TRUE,
+  epsilon = 0.01,
+  max_iter = 100,
+  take_intersection = FALSE,
+  include_cpgs = FALSE,
+  include_dmrs = TRUE,
+  init_param_method = "random",
+  a0init = NULL,
+  a1init = NULL,
+  sig0init = NULL,
+  sig1init = NULL,
+  tauinit = NULL,
+  demo = FALSE
+)
 }
 \arguments{
 \item{object}{an object can be a \code{RGChannelSet}, 
@@ -19,6 +32,8 @@ estimatecc(object, find_dmrs_object = NULL, verbose = TRUE,
 different differentially methylated regions, they can 
 use the output from the \code{find_dmrs} function 
 to supply different regions to \code{estimatecc}.}
+
+\item{dataset}{}
 
 \item{verbose}{TRUE/FALSE argument specifying if verbose
 messages should be returned or not. Default is TRUE.}
@@ -76,10 +91,10 @@ Estimate cell composition from DNAm data
 }
 \examples{
 # This is a reduced version of the FlowSorted.Blood.450k 
-# dataset available by using BiocManager::install("FlowSorted.Blood.450k),
+# dataset available by using BiocManager::install("FlowSorted.Blood.450k"),
 # but for purposes of the example, we use the smaller version 
-# and we set \\code{demo=TRUE}. For any case outside of this example for 
-# the package, you should set \\code{demo=FALSE} (the default). 
+# and we set \code{demo=TRUE}. For any case outside of this example for 
+# the package, you should set \code{demo=FALSE} (the default). 
 
 dir <- system.file("data", package="methylCC")
 files <- file.path(dir, "FlowSorted.Blood.450k.sub.RData") 

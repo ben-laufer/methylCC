@@ -4,8 +4,10 @@
 \name{FlowSorted.Blood.450k.sub}
 \alias{FlowSorted.Blood.450k.sub}
 \title{A reduced size of the FlowSorted.Blood.450k dataset}
-\format{A RGset object with 2e5 rows (probes)
-and 6 columns (whole blood samples).}
+\format{
+A RGset object with 2e5 rows (probes)
+and 6 columns (whole blood samples).
+}
 \description{
 A reduced size of the 
 \code{FlowSorted.Blood.450k} dataset 

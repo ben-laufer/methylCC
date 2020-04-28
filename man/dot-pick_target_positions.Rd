@@ -4,8 +4,12 @@
 \alias{.pick_target_positions}
 \title{Pick target positions}
 \usage{
-.pick_target_positions(target_granges, target_object = NULL,
-  target_cvg = NULL, dmp_regions)
+.pick_target_positions(
+  target_granges,
+  target_object = NULL,
+  target_cvg = NULL,
+  dmp_regions
+)
 }
 \arguments{
 \item{target_granges}{add more here.}

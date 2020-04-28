@@ -4,13 +4,23 @@
 \alias{.find_dmrs}
 \title{Finding differentially methylated regions}
 \usage{
-.find_dmrs(verbose = TRUE, gr_target = NULL, include_cpgs = FALSE,
-  include_dmrs = TRUE, num_cpgs = 50, num_regions = 50,
-  bumphunter_beta_cutoff = 0.2, dmr_up_cutoff = 0.5,
-  dmr_down_cutoff = 0.4, dmr_pval_cutoff = 1e-11,
-  cpg_pval_cutoff = 1e-08, cpg_up_dm_cutoff = 0,
-  cpg_down_dm_cutoff = 0, pairwise_comparison = FALSE,
-  mset_train_flow_sort = NULL)
+.find_dmrs(
+  verbose = TRUE,
+  gr_target = NULL,
+  include_cpgs = FALSE,
+  include_dmrs = TRUE,
+  num_cpgs = 50,
+  num_regions = 50,
+  bumphunter_beta_cutoff = 0.2,
+  dmr_up_cutoff = 0.5,
+  dmr_down_cutoff = 0.4,
+  dmr_pval_cutoff = 1e-11,
+  cpg_pval_cutoff = 1e-08,
+  cpg_up_dm_cutoff = 0,
+  cpg_down_dm_cutoff = 0,
+  pairwise_comparison = FALSE,
+  mset_train_flow_sort = NULL
+)
 }
 \arguments{
 \item{verbose}{TRUE/FALSE argument specifying if verbose
@@ -68,16 +78,19 @@ one cell type, but are methylated in the other cell types.}
 comparisons (e.g. methylated in Granulocytes and Monocytes, 
 but not methylated in other cell types). Default if FALSE.}
 
-\item{mset_train_flow_sort}{Default is NULL. However, a user
-can provide a \code{MethylSet} object after processing the 
-\code{FlowSorted.Blood.450k} dataset. The default normalization
-is \code{preprocessIllumina()}.}
+\item{mset_train_flow_sort}{Default is NULL and will select 
+select \code{"FlowSorted.Blood.450k"}. Alternatively, the user
+can specify another existing dataset \code{c("FlowSorted.Blood.EPIC",
+"FlowSorted.CordBloodCombined.450k", "FlowSorted.DLPFC.450k")}.
+Additionally, a user can provide a \code{MethylSet} object after
+processing the \code{FlowSorted.Blood.450k} dataset. The default
+normalization is \code{preprocessIllumina()}.}
 }
 \value{
 A list of data frames and GRanges objects.
 }
 \description{
-This function uses the \code{FlowSorted.Blood.450k}
-whole blood reference methylomes with six cell types 
-to identify differentially methylated regions.
+This function use flow sorted array 
+reference methylomes for either blood, cordblood, 
+or brain to identify differentially methylated regions.
 }

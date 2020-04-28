@@ -4,10 +4,15 @@
 #'
 #' @param object an object can be a \code{RGChannelSet}, 
 #' \code{GenomicMethylSet} or \code{BSseq} object
+#' @param dataset Default is \code{"FlowSorted.Blood.450k"}.
+#' Alternatively, the user can specify another existing dataset
+#' \code{c("FlowSorted.Blood.EPIC", "FlowSorted.CordBloodCombined.450k",
+#' "FlowSorted.DLPFC.450k")}
 #' @param find_dmrs_object If the user would like to supply 
 #' different differentially methylated regions, they can 
 #' use the output from the \code{find_dmrs} function 
 #' to supply different regions to \code{estimatecc}. 
+#' @param dataset 
 #' @param verbose TRUE/FALSE argument specifying if verbose
 #' messages should be returned or not. Default is TRUE.
 #' @param epsilon Threshold for EM algorithm to check
@@ -56,7 +61,7 @@
 #' 
 #' @examples
 #' # This is a reduced version of the FlowSorted.Blood.450k 
-#' # dataset available by using BiocManager::install("FlowSorted.Blood.450k),
+#' # dataset available by using BiocManager::install("FlowSorted.Blood.450k"),
 #' # but for purposes of the example, we use the smaller version 
 #' # and we set \code{demo=TRUE}. For any case outside of this example for 
 #' # the package, you should set \code{demo=FALSE} (the default). 
@@ -71,7 +76,8 @@
 #'     cell_counts(est)
 #'  }   
 #' 
-estimatecc <- function(object, find_dmrs_object = NULL, verbose = TRUE, 
+estimatecc <- function(object, find_dmrs_object = NULL,
+                       dataset = "FlowSorted.Blood.450k", verbose = TRUE, 
                        epsilon = 0.01, max_iter = 100, 
                        take_intersection = FALSE,
                        include_cpgs = FALSE, include_dmrs = TRUE,
@@ -90,11 +96,16 @@ if(!demo){
     stop("The init_param_method must be set to 'random' or 'known_regions'.")
   }
   
+  if(init_param_method == "known_regions" & dataset != "FlowSorted.Blood.450k"){
+    stop("The init_param_method must 'known_regions' can only be used for 'FlowSorted.Blood.450k'.")
+  }
+  
   if(is.null(find_dmrs_object)){
     if(!take_intersection){
       dmrs_found <- suppressWarnings(.find_dmrs(verbose = verbose, 
                                                 include_cpgs = include_cpgs, 
-                                                include_dmrs = include_dmrs))
+                                                include_dmrs = include_dmrs,
+                                                mset_train_flow_sort = dataset))
     } else {
       eout <- .extract_raw_data(object)
       dmrs_found <- suppressWarnings(.find_dmrs(verbose = verbose, 
